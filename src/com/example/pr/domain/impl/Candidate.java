@@ -95,8 +95,8 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
 
   public void setPartyCode(String partyCode) {
     clearError(FIELD_PARTY_CODE);
-    if (partyCode == null) {
-      addError(FIELD_PARTY_CODE, ValidationError.PARTY_ID_REQUIRED.getMessage());
+    if (partyCode == null || partyCode.trim().isEmpty()) {
+      partyCode = "0";
     }
     this.partyCode = partyCode;
     updateTimestamp();

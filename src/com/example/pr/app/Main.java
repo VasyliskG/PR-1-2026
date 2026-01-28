@@ -125,7 +125,7 @@ public class Main {
       ElectionResponseDto election = electionService.create(new ElectionCreateDto(
           "Президентські вибори 2026",
           "Вибори Президента України на 2026 рік",
-          LocalDateTime.of(2026, 3, 31, 8, 0),
+          LocalDateTime.of(2025, 3, 31, 8, 0),
           LocalDateTime.of(2026, 3, 31, 20, 0)
       ));
       System.out.println("✓ Створено вибори: " + election.name());
