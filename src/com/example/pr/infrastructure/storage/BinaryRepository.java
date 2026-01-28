@@ -67,6 +67,33 @@ public abstract class BinaryRepository<T extends Entity> implements Repository<T
             .findFirst());
   }
 
+  /**
+   * Default реалізація - кидає UnsupportedOperationException.
+   * Перевизначте в підкласах для сутностей, що мають поле code.
+   */
+  @Override
+  public Optional<T> findByCode(String code) {
+    throw new UnsupportedOperationException("findByCode is not supported for this entity");
+  }
+
+  /**
+   * Default реалізація - кидає UnsupportedOperationException.
+   * Перевизначте в підкласах для сутностей, що мають поле code.
+   */
+  @Override
+  public boolean existsByCode(String code) {
+    throw new UnsupportedOperationException("existsByCode is not supported for this entity");
+  }
+
+  /**
+   * Default реалізація - кидає UnsupportedOperationException.
+   * Перевизначте в підкласах для сутностей, що мають поле code.
+   */
+  @Override
+  public boolean deleteByCode(String code) {
+    throw new UnsupportedOperationException("deleteByCode is not supported for this entity");
+  }
+
   @Override
   public List<T> findAll(Specification<T> spec) {
     return findAllInternal().stream()
