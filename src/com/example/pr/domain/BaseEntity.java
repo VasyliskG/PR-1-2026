@@ -1,5 +1,6 @@
 package com.example.pr.domain;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,18 +8,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public abstract class BaseEntity implements Entity {
+public abstract class BaseEntity implements Entity, Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   private final UUID id;
   private final LocalDateTime createdAt;
   private LocalDateTime updatedAt;
-  protected Map<String, List<String>> errors;
+  protected transient Map<String, List<String>> errors; // transient - не серіалізується
 
   protected BaseEntity() {
     this.id = UUID.randomUUID();
     this.createdAt = LocalDateTime.now();
     this.updatedAt = LocalDateTime.now();
     this.errors = new HashMap<>();
+  }
+
+  // Відновлення errors після десеріалізації
+  private void initErrors() {
+    if (this.errors == null) {
+      this.errors = new HashMap<>();
+    }
   }
 
   protected void updateTimestamp() {
@@ -34,19 +44,23 @@ public abstract class BaseEntity implements Entity {
   }
 
   protected void addError(String field, String message) {
+    initErrors();
     this.errors.computeIfAbsent(field, k -> new ArrayList<>())
         .add(message);
   }
 
   protected void clearError(String field) {
+    initErrors();
     this.errors.remove(field);
   }
 
   public Map<String, List<String>> getErrors() {
+    initErrors();
     return new HashMap<>(errors);
   }
 
   public boolean isValid() {
+    initErrors();
     return errors.isEmpty();
   }
 
@@ -60,7 +74,6 @@ public abstract class BaseEntity implements Entity {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     BaseEntity that = (BaseEntity) o;
     return id.equals(that.id);
   }
