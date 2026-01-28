@@ -21,7 +21,7 @@ public interface CandidateRepository extends Repository<Candidate> {
   /**
    * Знаходить всіх кандидатів партії.
    */
-  List<Candidate> findByPartyId(UUID partyId);
+  List<Candidate> findByPartyCode(String partyCode);
 
   /**
    * Видаляє всіх кандидатів з виборів.
@@ -31,7 +31,7 @@ public interface CandidateRepository extends Repository<Candidate> {
   /**
    * Видаляє всіх кандидатів партії.
    */
-  void deleteByPartyId(UUID partyId);
+  void deleteByPartyCode(String partyCode);
 
   /**
    * Підраховує кандидатів на виборах.
@@ -41,5 +41,5 @@ public interface CandidateRepository extends Repository<Candidate> {
   /**
    * Підраховує кандидатів партії.
    */
-  long countByPartyId(UUID partyId);
+  long countByPartyCode(String partyCode);
 }

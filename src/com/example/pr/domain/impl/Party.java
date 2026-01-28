@@ -3,12 +3,15 @@ package com.example.pr.domain.impl;
 import com.example.pr.domain.BaseEntity;
 import com.example.pr.domain.exeption.EntityValidationException;
 import com.example.pr.domain.util.ValidationError;
+import java.util.UUID;
 
 public class Party extends BaseEntity implements Comparable<Party> {
 
+  public static final String FIELD_PARTY_CODE = "partyCode";
   public static final String FIELD_NAME = "name";
   public static final String FIELD_ABBREVIATION = "abbreviation";
 
+  private String partyCode;
   private String name;
   private String abbreviation;
   private String logoPath;
@@ -18,8 +21,9 @@ public class Party extends BaseEntity implements Comparable<Party> {
     super();
   }
 
-  public Party(String name, String abbreviation, String logoPath, String program) {
+  public Party(String partyCode, String name, String abbreviation, String logoPath, String program) {
     this();
+    setPartyCode(partyCode);
     setName(name);
     setAbbreviation(abbreviation);
     setLogoPath(logoPath);
@@ -28,6 +32,19 @@ public class Party extends BaseEntity implements Comparable<Party> {
     if (!isValid()) {
       throw new EntityValidationException(getErrors());
     }
+  }
+
+  public String getPartyCode() {
+    return partyCode;
+  }
+
+  public void setPartyCode(String partyCode) {
+    clearError(FIELD_PARTY_CODE);
+    if (partyCode == null) {
+      addError(FIELD_PARTY_CODE, ValidationError.PARTY_ID_REQUIRED.getMessage());
+    }
+    this.partyCode = partyCode;
+    updateTimestamp();
   }
 
   public String getName() {

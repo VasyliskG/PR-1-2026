@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Фабрика специфікацій для пошуку кандидатів (Candidate).
  * <p>
- * Поля Candidate: - firstName, lastName - passportNumber - partyId (UUID) - electionId (UUID) -
+ * Поля Candidate: - firstName, lastName - passportNumber - partyCode (UUID) - electionId (UUID) -
  * program - photoPath - biography
  */
 public final class CandidateSpecifications {
@@ -59,23 +59,23 @@ public final class CandidateSpecifications {
   /**
    * Кандидати від конкретної партії.
    */
-  public static Specification<Candidate> byPartyId(UUID partyId) {
-    return candidate -> candidate.getPartyId() != null
-        && candidate.getPartyId().equals(partyId);
+  public static Specification<Candidate> byPartyCode(String partyCode) {
+    return candidate -> candidate.getPartyCode() != null
+        && candidate.getPartyCode().equals(partyCode);
   }
 
   /**
    * Незалежні кандидати.
    */
   public static Specification<Candidate> independent() {
-    return candidate -> candidate.getPartyId() == null;
+    return candidate -> candidate.getPartyCode() == null;
   }
 
   /**
    * Кандидати з партією.
    */
   public static Specification<Candidate> hasParty() {
-    return candidate -> candidate.getPartyId() != null;
+    return candidate -> candidate.getPartyCode() != null;
   }
 
   /**
@@ -89,8 +89,8 @@ public final class CandidateSpecifications {
   /**
    * Кандидати на конкретних виборах від конкретної партії.
    */
-  public static Specification<Candidate> byElectionAndParty(UUID electionId, UUID partyId) {
-    return byElectionId(electionId).and(byPartyId(partyId));
+  public static Specification<Candidate> byElectionAndParty(UUID electionId, String partyCode) {
+    return byElectionId(electionId).and(byPartyCode(partyCode));
   }
 
   /**

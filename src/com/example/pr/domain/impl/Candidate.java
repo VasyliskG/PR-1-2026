@@ -10,14 +10,14 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
   public static final String FIELD_FIRST_NAME = "firstName";
   public static final String FIELD_LAST_NAME = "lastName";
   public static final String FIELD_PASSPORT_NUMBER = "passportNumber";
-  public static final String FIELD_PARTY_ID = "partyId";
+  public static final String FIELD_PARTY_CODE = "partyCode";
   public static final String FIELD_ELECTION_ID = "electionId";
   public static final String FIELD_PROGRAM = "program";
 
   private String firstName;
   private String lastName;
   private String passportNumber;
-  private UUID partyId;
+  private String partyCode;
   private UUID electionId;
   private String program;
   private String photoPath;
@@ -27,13 +27,13 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
     super();
   }
 
-  public Candidate(String firstName, String lastName, String passportNumber, UUID partyId, UUID electionId,
+  public Candidate(String firstName, String lastName, String passportNumber, String partyCode, UUID electionId,
       String program, String photoPath, String biography) {
     this();
     setFirstName(firstName);
     setLastName(lastName);
     setPassportNumber(passportNumber);
-    setPartyId(partyId);
+    setPartyCode(partyCode);
     setElectionId(electionId);
     setProgram(program);
     setPhotoPath(photoPath);
@@ -89,16 +89,16 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
     updateTimestamp();
   }
 
-  public UUID getPartyId() {
-    return partyId;
+  public String getPartyCode() {
+    return partyCode;
   }
 
-  public void setPartyId(UUID partyId) {
-    clearError(FIELD_PARTY_ID);
-    if (partyId == null) {
-      addError(FIELD_PARTY_ID, ValidationError.PARTY_ID_REQUIRED.getMessage());
+  public void setPartyCode(String partyCode) {
+    clearError(FIELD_PARTY_CODE);
+    if (partyCode == null) {
+      addError(FIELD_PARTY_CODE, ValidationError.PARTY_ID_REQUIRED.getMessage());
     }
-    this.partyId = partyId;
+    this.partyCode = partyCode;
     updateTimestamp();
   }
 
@@ -157,6 +157,6 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
 
   @Override
   public String toString() {
-    return String.format("Candidate{%s %s, partyId=%s}", firstName, lastName, partyId);
+    return String.format("Candidate{%s %s, partyCode=%s}", firstName, lastName, partyCode);
   }
 }
