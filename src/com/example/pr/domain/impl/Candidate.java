@@ -9,12 +9,14 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
 
   public static final String FIELD_FIRST_NAME = "firstName";
   public static final String FIELD_LAST_NAME = "lastName";
+  public static final String FIELD_PASSPORT_NUMBER = "passportNumber";
   public static final String FIELD_PARTY_ID = "partyId";
   public static final String FIELD_ELECTION_ID = "electionId";
   public static final String FIELD_PROGRAM = "program";
 
   private String firstName;
   private String lastName;
+  private String passportNumber;
   private UUID partyId;
   private UUID electionId;
   private String program;
@@ -25,11 +27,12 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
     super();
   }
 
-  public Candidate(String firstName, String lastName, UUID partyId, UUID electionId,
+  public Candidate(String firstName, String lastName, String passportNumber, UUID partyId, UUID electionId,
       String program, String photoPath, String biography) {
     this();
     setFirstName(firstName);
     setLastName(lastName);
+    setPassportNumber(passportNumber);
     setPartyId(partyId);
     setElectionId(electionId);
     setProgram(program);
@@ -68,6 +71,21 @@ public class Candidate extends BaseEntity implements Comparable<Candidate> {
       addError(FIELD_LAST_NAME, ValidationError.LAST_NAME_LENGTH.getMessage());
     }
     this.lastName = lastName;
+    updateTimestamp();
+  }
+
+  public String getPassportNumber() {
+    return passportNumber;
+  }
+
+  public void setPassportNumber(String passportNumber) {
+    clearError(FIELD_PASSPORT_NUMBER);
+    if (passportNumber == null || passportNumber.trim().isEmpty()) {
+      addError(FIELD_PASSPORT_NUMBER, ValidationError.PASSPORT_NUMBER_REQUIRED.getMessage());
+    } else if (!passportNumber.matches("^[A-Z]{2}\\d{6}$")) {
+      addError(FIELD_PASSPORT_NUMBER, ValidationError.PASSPORT_NUMBER_FORMAT.getMessage());
+    }
+    this.passportNumber = passportNumber;
     updateTimestamp();
   }
 
