@@ -159,4 +159,13 @@ public class PartyService {
     }
     return context.candidates().countByPartyCode(partyCode);
   }
+
+  /**
+   * Знаходить партію за кодом.
+   */
+  public PartyResponseDto findByCode(String code) {
+    Party party = partyRepository.findByCode(code)
+        .orElseThrow(() -> new EntityNotFoundException("Партія", "code", code));
+    return PartyResponseDto.fromEntity(party);
+  }
 }
