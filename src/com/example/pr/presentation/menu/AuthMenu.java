@@ -5,6 +5,7 @@ import com.example.pr.domain.dto.auth.LoginDto;
 import com.example.pr.domain.dto.auth.RegisterDto;
 import com.example.pr.domain.dto.region.RegionResponseDto;
 import com.example.pr.domain.dto.voter.VoterResponseDto;
+import com.example.pr.domain.exeption.EntityValidationException;
 import com.example.pr.domain.service.AuthService;
 import com.example.pr.domain.service.RegionService;
 import com.example.pr.domain.service.exception.ServiceException;
@@ -23,6 +24,9 @@ import static com.example.pr.presentation.util.ConsoleColors.*;
  * Меню аутентифікації.
  */
 public class AuthMenu extends ConsoleUI implements Menu {
+
+  private static final int MIN_AGE = 18;
+  private static final int MIN_PASSWORD_LENGTH = 6;
 
   private final AuthService authService;
   private final RegionService regionService;
@@ -83,17 +87,17 @@ public class AuthMenu extends ConsoleUI implements Menu {
     try {
       showRegions();
 
-      String firstName = input.readRequiredString("Ім'я");
-      String lastName = input.readRequiredString("Прізвище");
+      // Валідація відбувається одразу під час вводу!
+      String firstName = input.readName("Ім'я");
+      String lastName = input.readName("Прізвище");
       String email = input.readEmail("Email");
-      String password = input.readPassword("Пароль");
-      String confirmPassword = input.readPassword("Підтвердіть пароль");
-      String passportNumber = input.readRequiredString("Номер паспорта");
-      LocalDate birthDate = input.readDate("Дата народження");
+      String password = input.readPasswordWithConfirmation("Пароль", "Підтвердіть пароль", MIN_PASSWORD_LENGTH);
+      String passportNumber = input.readPassportNumber("Номер паспорта");
+      LocalDate birthDate = input.readBirthDate("Дата народження", MIN_AGE);
       UUID regionId = input.readUUID("ID регіону");
 
       VoterResponseDto voter = authService.register(new RegisterDto(
-          firstName, lastName, email, password, confirmPassword,
+          firstName, lastName, email, password, password, // password вже підтверджений
           passportNumber, birthDate, regionId
       ));
 
@@ -102,8 +106,12 @@ public class AuthMenu extends ConsoleUI implements Menu {
 
     } catch (ServiceException e) {
       printError(e.getMessage());
-    } catch (IllegalArgumentException e) {
-      printError("Помилка валідації: " + e.getMessage());
+    } catch (EntityValidationException e) {
+      // На випадок, якщо щось пройшло повз валідацію на рівні вводу
+      printError("Помилка валідації даних:");
+      e.getErrors().forEach((field, messages) -> {
+        messages.forEach(msg -> printError("  • " + msg));
+      });
     }
 
     input.pressEnterToContinue();

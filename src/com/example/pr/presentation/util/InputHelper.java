@@ -1,7 +1,9 @@
 package com.example.pr.presentation.util;
 
+import java.io.Console;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -18,6 +20,11 @@ public class InputHelper {
   private final Scanner scanner;
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+  // Патерни валідації
+  private static final String EMAIL_PATTERN = "^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$";
+  private static final String PASSPORT_PATTERN = "^[A-Z]{2}\\d{6}$";
+  private static final String NAME_PATTERN = "^[A-Za-zА-Яа-яІіЇїЄєҐґ'\\-\\s]{2,50}$";
 
   public InputHelper(Scanner scanner) {
     this.scanner = scanner;
@@ -80,6 +87,35 @@ public class InputHelper {
     }
   }
 
+  /**
+   * Читає дату народження з перевіркою мінімального віку.
+   */
+  public LocalDate readBirthDate(String prompt, int minAge) {
+    while (true) {
+      try {
+        String input = readString(prompt + " (дд.мм.рррр)");
+        LocalDate birthDate = LocalDate.parse(input, DATE_FORMAT);
+
+        // Перевірка на майбутню дату
+        if (birthDate.isAfter(LocalDate.now())) {
+          System.out.println(error("  ✗ Дата народження не може бути в майбутньому!"));
+          continue;
+        }
+
+        // Перевірка мінімального віку
+        int age = Period.between(birthDate, LocalDate.now()).getYears();
+        if (age < minAge) {
+          System.out.println(error("  ✗ Мінімальний вік для реєстрації: " + minAge + " років. Ваш вік: " + age));
+          continue;
+        }
+
+        return birthDate;
+      } catch (DateTimeParseException e) {
+        System.out.println(error("  ✗ Невірний формат! Використовуйте: дд.мм.рррр"));
+      }
+    }
+  }
+
   public LocalDateTime readDateTime(String prompt) {
     while (true) {
       try {
@@ -115,18 +151,101 @@ public class InputHelper {
     }
   }
 
+  /**
+   * Читає пароль з консолі (символи не відображаються).
+   */
   public String readPassword(String prompt) {
-    System.out.print(CYAN + prompt + ": " + RESET);
-    return scanner.nextLine();
+    Console console = System.console();
+
+    if (console != null) {
+      // Працює в терміналі - пароль повністю прихований
+      System.out.print(CYAN + prompt + ": " + RESET);
+      char[] passwordChars = console.readPassword();
+      return passwordChars != null ? new String(passwordChars) : "";
+    } else {
+      // Fallback для IDE (IntelliJ, Eclipse) - console == null
+      System.out.print(CYAN + prompt + " (ввід видимий в IDE): " + RESET);
+      return scanner.nextLine();
+    }
+  }
+
+  /**
+   * Читає пароль з підтвердженням та валідацією.
+   */
+  public String readPasswordWithConfirmation(String prompt, String confirmPrompt, int minLength) {
+    while (true) {
+      String password = readPassword(prompt);
+
+      // Перевірка мінімальної довжини
+      if (password.length() < minLength) {
+        System.out.println(error("  ✗ Пароль повинен містити мінімум " + minLength + " символів!"));
+        continue;
+      }
+
+      // Підтвердження пароля
+      String confirmPassword = readPassword(confirmPrompt);
+
+      if (!password.equals(confirmPassword)) {
+        System.out.println(error("  ✗ Паролі не співпадають! Спробуйте ще раз."));
+        continue;
+      }
+
+      return password;
+    }
   }
 
   public String readEmail(String prompt) {
     while (true) {
       String email = readRequiredString(prompt);
-      if (email.matches("^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+      if (email.matches(EMAIL_PATTERN)) {
         return email.toLowerCase();
       }
-      System.out.println(error("  ✗ Невірний формат email!"));
+      System.out.println(error("  ✗ Невірний формат email! Приклад: user@example.com"));
+    }
+  }
+
+  /**
+   * Читає номер паспорта з валідацією формату.
+   * Формат: 2 великі латинські літери + 6 цифр (наприклад, AA123456)
+   */
+  public String readPassportNumber(String prompt) {
+    while (true) {
+      String passport = readRequiredString(prompt + " (формат: AA123456)");
+
+      // Автоматично переводимо в верхній регістр
+      passport = passport.toUpperCase();
+
+      if (passport.matches(PASSPORT_PATTERN)) {
+        return passport;
+      }
+      System.out.println(error("  ✗ Невірний формат! Очікується: 2 великі латинські літери + 6 цифр"));
+      System.out.println(info("    Приклад: AA123456, BC789012"));
+    }
+  }
+
+  /**
+   * Читає ім'я або прізвище з валідацією.
+   */
+  public String readName(String prompt) {
+    while (true) {
+      String name = readRequiredString(prompt);
+
+      if (name.length() < 2) {
+        System.out.println(error("  ✗ Мінімальна довжина: 2 символи!"));
+        continue;
+      }
+
+      if (name.length() > 50) {
+        System.out.println(error("  ✗ Максимальна довжина: 50 символів!"));
+        continue;
+      }
+
+      if (!name.matches(NAME_PATTERN)) {
+        System.out.println(error("  ✗ Ім'я може містити лише літери, апостроф та дефіс!"));
+        continue;
+      }
+
+      return name;
     }
   }
 
