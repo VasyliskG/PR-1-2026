@@ -7,8 +7,11 @@ import com.example.pr.domain.dto.region.RegionResponseDto;
 import com.example.pr.domain.dto.voter.VoterResponseDto;
 import com.example.pr.domain.exeption.EntityValidationException;
 import com.example.pr.domain.service.AuthService;
+import com.example.pr.domain.service.EmailService;
 import com.example.pr.domain.service.RegionService;
+import com.example.pr.domain.service.VerificationService;
 import com.example.pr.domain.service.exception.ServiceException;
+import com.example.pr.infrastructure.config.EmailConfig;
 import com.example.pr.presentation.ConsoleUI;
 import com.example.pr.presentation.util.TablePrinter;
 
@@ -30,11 +33,23 @@ public class AuthMenu extends ConsoleUI implements Menu {
 
   private final AuthService authService;
   private final RegionService regionService;
+  private final VerificationService verificationService;
+  private final EmailConfig emailConfig;
 
   public AuthMenu(Scanner scanner, AuthService authService, RegionService regionService) {
     super(scanner);
     this.authService = authService;
     this.regionService = regionService;
+
+    this.emailConfig = new EmailConfig();
+
+    if (!emailConfig.isEnabled()) {
+      this.verificationService = null;
+      return;
+    }
+
+    EmailService emailService = new EmailService(emailConfig.getSenderEmail(), emailConfig.getAppPassword());
+    this.verificationService = new VerificationService(emailService);
   }
 
   @Override
@@ -91,6 +106,29 @@ public class AuthMenu extends ConsoleUI implements Menu {
       String firstName = input.readName("Ім'я");
       String lastName = input.readName("Прізвище");
       String email = input.readEmail("Email");
+
+      if (!emailConfig.isEnabled()) {
+        printWarning("Email верифікація вимкнена. Продовжуємо реєстрацію...");
+      } else {
+        // Новий крок: відправка коду підтвердження
+        try {
+          verificationService.sendVerificationCode(email);
+          printSuccess("Код підтвердження відправлено на " + email + ". Термін дії: 10 хвилин.");
+        } catch (Exception e) {
+          printError("Помилка відправки email. Спробуйте пізніше.");
+          input.pressEnterToContinue();
+          return;
+        }
+
+        // Новий крок: введення та перевірка коду
+        String inputCode = input.readRequiredString("Введіть код підтвердження з email");
+        if (!verificationService.verifyCode(email, inputCode)) {
+          printError("Невірний або прострочений код підтвердження.");
+          input.pressEnterToContinue();
+          return;
+        }
+      }
+
       String password = input.readPasswordWithConfirmation("Пароль", "Підтвердіть пароль", MIN_PASSWORD_LENGTH);
       String passportNumber = input.readPassportNumber("Номер паспорта");
       LocalDate birthDate = input.readBirthDate("Дата народження", MIN_AGE);

@@ -1,5 +1,6 @@
 package com.example.pr.app;
 
+import com.example.pr.infrastructure.config.EmailConfig;
 import com.example.pr.presentation.Application;
 
 /**
