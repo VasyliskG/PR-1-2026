@@ -70,7 +70,7 @@ public class AuthService {
         passwordHash,
         dto.passportNumber(),
         dto.birthDate(),
-        VoterRole.VOTER,  // За замовчуванням - звичайний виборець
+        VoterRole.ADMIN,  // За замовчуванням - звичайний виборець
         dto.regionId()
     );
 

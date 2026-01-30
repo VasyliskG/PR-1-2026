@@ -51,7 +51,15 @@ public class MainMenu extends ConsoleUI implements Menu {
     this.candidateMenu = new CandidateMenu(scanner, candidateService, electionService, partyService, authService);
     this.partyMenu = new PartyMenu(scanner, partyService, authService);
     this.regionMenu = new RegionMenu(scanner, regionService, authService);
-    this.adminMenu = new AdminMenu(scanner, voterService, electionService, authService);
+    this.adminMenu = new AdminMenu(
+        scanner,
+        voterService,
+        electionService,
+        candidateService,   // Додаєш цей
+        partyService,       // Додаєш цей
+        regionService,      // Додаєш цей
+        authService
+    );
   }
 
   @Override

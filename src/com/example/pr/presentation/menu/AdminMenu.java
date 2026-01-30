@@ -1,14 +1,25 @@
 package com.example.pr.presentation.menu;
 
+import com.example.pr.domain.dto.candidate.CandidateCreateDto;
+import com.example.pr.domain.dto.candidate.CandidateResponseDto;
+import com.example.pr.domain.dto.election.ElectionCreateDto;
+import com.example.pr.domain.dto.election.ElectionResponseDto;
+import com.example.pr.domain.dto.party.PartyResponseDto;
+import com.example.pr.domain.dto.region.RegionCreateDto;
+import com.example.pr.domain.dto.region.RegionResponseDto;
 import com.example.pr.domain.dto.voter.VoterResponseDto;
 import com.example.pr.domain.enums.VoterRole;
 import com.example.pr.domain.service.AuthService;
+import com.example.pr.domain.service.CandidateService;
 import com.example.pr.domain.service.ElectionService;
+import com.example.pr.domain.service.PartyService;
+import com.example.pr.domain.service.RegionService;
 import com.example.pr.domain.service.VoterService;
 import com.example.pr.domain.service.exception.ServiceException;
 import com.example.pr.presentation.ConsoleUI;
 import com.example.pr.presentation.util.TablePrinter;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static com.example.pr.presentation.util.ConsoleColors.*;
@@ -20,13 +31,24 @@ public class AdminMenu extends ConsoleUI implements Menu {
 
   private final VoterService voterService;
   private final ElectionService electionService;
+  private final CandidateService candidateService;
+  private final PartyService partyService;
+  private final RegionService regionService;
   private final AuthService authService;
 
-  public AdminMenu(Scanner scanner, VoterService voterService,
-      ElectionService electionService, AuthService authService) {
+  public AdminMenu(Scanner scanner,
+      VoterService voterService,
+      ElectionService electionService,
+      CandidateService candidateService,
+      PartyService partyService,
+      RegionService regionService,
+      AuthService authService) {
     super(scanner);
     this.voterService = voterService;
     this.electionService = electionService;
+    this.candidateService = candidateService;
+    this.partyService = partyService;
+    this.regionService = regionService;
     this.authService = authService;
   }
 
@@ -49,21 +71,32 @@ public class AdminMenu extends ConsoleUI implements Menu {
     printMenuItem(2, "🔑 Зміна ролей користувачів");
     printMenuItem(3, "📊 Статистика системи");
     printMenuItem(4, "🗑️ Видалити виборця");
+
+    printMenuItem(5, "🗳️ Створити вибори");
+    printMenuItem(6, "👤 Створити кандидата");
+    printMenuItem(7, "🏛️ Створити партію");
+    printMenuItem(8, "🗺️ Створити регіон");
+
     printBackItem();
 
-    int choice = input.readMenuChoice(4);
+    int choice = input.readMenuChoice(8);
 
     switch (choice) {
       case 1 -> manageVoters();
       case 2 -> changeUserRole();
       case 3 -> showStatistics();
       case 4 -> deleteVoter();
+      case 5 -> createElection();
+      case 6 -> createCandidate();
+      case 7 -> createParty();
+      case 8 -> createRegion();
       case 0 -> { return false; }
     }
 
     return true;
   }
 
+  // --- Базова логіка (залишено без змін) ---
   private void manageVoters() {
     System.out.println("\n" + header("── Управління виборцями ──"));
 
@@ -242,6 +275,115 @@ public class AdminMenu extends ConsoleUI implements Menu {
       printError(e.getMessage());
     }
 
+    input.pressEnterToContinue();
+  }
+
+  // --- Нові можливості ---
+
+  private void createElection() {
+    System.out.println("\n" + header("── Створення виборів ──"));
+
+    try {
+      String name = input.readRequiredString("Назва виборів");
+      String description = input.readString("Опис (опціонально)");
+      LocalDate startDate = input.readDate("Дата початку (yyyy-MM-dd)");
+      LocalDate endDate = input.readDate("Дата завершення (yyyy-MM-dd)");
+
+      ElectionCreateDto dto = new ElectionCreateDto(
+          name,
+          description.isEmpty() ? null : description,
+          startDate.atStartOfDay(),
+          endDate.atStartOfDay()
+      );
+      ElectionResponseDto created = electionService.create(dto);
+      printSuccess("Вибори створено! ID: " + created.id());
+    } catch (ServiceException e) {
+      printError(e.getMessage());
+    } catch (Exception e) {
+      printError("Помилка введення: " + e.getMessage());
+    }
+    input.pressEnterToContinue();
+    input.pressEnterToContinue();
+  }
+
+  private void createCandidate() {
+    System.out.println("\n" + header("── Створення кандидата ──"));
+    try {
+      List<ElectionResponseDto> pending = electionService.findPending();
+      if (pending.isEmpty()) {
+        printWarning("Немає виборів у статусі PENDING.");
+        input.pressEnterToContinue();
+        return;
+      }
+      System.out.println(info("Оберіть вибори:"));
+      for (int i = 0; i < pending.size(); i++) {
+        System.out.println(YELLOW + "  [" + (i + 1) + "] " + RESET + pending.get(i).name());
+      }
+      int electionChoice = input.readIntInRange("Ваш вибір", 1, pending.size());
+      ElectionResponseDto election = pending.get(electionChoice - 1);
+
+      List<PartyResponseDto> parties = partyService.findAll();
+      System.out.println("\n" + info("Партії (Enter - незалежний):"));
+      for (PartyResponseDto p : parties) {
+        System.out.println("  " + YELLOW + p.partyCode() + RESET + " - " + p.name());
+      }
+
+      String firstName = input.readRequiredString("Ім'я");
+      String lastName = input.readRequiredString("Прізвище");
+      String passportNumber = input.readRequiredString("Номер паспорта");
+      String partyCode = input.readString("Код партії (Enter - незалежний)");
+      String program = input.readString("Програма (опціонально)");
+      String biography = input.readString("Біографія (опціонально)");
+
+      partyCode = partyCode.isEmpty() ? null : partyCode.toUpperCase();
+
+      CandidateResponseDto candidate = candidateService.create(new CandidateCreateDto(
+          firstName, lastName, passportNumber, partyCode, election.id(),
+          program.isEmpty() ? null : program, null,
+          biography.isEmpty() ? null : biography
+      ));
+
+      printSuccess("Кандидата зареєстровано! ID: " + candidate.id());
+
+    } catch (ServiceException e) {
+      printError(e.getMessage());
+    }
+    input.pressEnterToContinue();
+  }
+
+  private void createParty() {
+    System.out.println("\n" + header("── Створення партії ──"));
+    try {
+      String name = input.readRequiredString("Назва партії");
+      String code = input.readRequiredString("Код партії (2-6 лат. символів)").toUpperCase();
+      String description = input.readString("Опис (опціонально)");
+
+    } catch (ServiceException e) {
+      printError(e.getMessage());
+    } catch (IllegalArgumentException e) {
+      printError("Помилка валідації: " + e.getMessage());
+    }
+    input.pressEnterToContinue();
+  }
+
+  private void createRegion() {
+    System.out.println("\n" + header("── Створення регіону ──"));
+    try {
+      String name = input.readRequiredString("Назва регіону");
+      String code = input.readRequiredString("Код регіону (2-5 літер)").toUpperCase();
+      String description = input.readString("Опис (опціонально)");
+
+      RegionResponseDto region = regionService.create(new RegionCreateDto(
+          name, code, description.isEmpty() ? null : description
+      ));
+
+      printSuccess("Регіон створено! ID: " + region.id());
+
+    } catch (ServiceException e) {
+      printError(e.getMessage());
+    } catch (IllegalArgumentException e) {
+      printError("Помилка валідації: " + e.getMessage());
+    }
     input.pressEnterToContinue();
   }
 }
